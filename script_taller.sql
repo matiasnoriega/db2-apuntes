@@ -156,17 +156,42 @@ CREATE INDEX index_id ON optimizacion.los_tres_dias(id); -- CREATE INDEX Query r
 
 --8. (Análisis de consultas) Para cada una de las siguientes consultas, exprese en lenguaje coloquial qu´e es lo que hacen, y mida el tiempo de ejecuci´on de las mismas sin utilizar ´ındices: 
 
--- Selecciona de la tabla SABADO todos los campos de las entradas cuyo ID
+-- Selecciona de la tabla SABADO todos los campos de las entradas cuyo visitante no haya visitado el parque el Viernes
 /*
 SELECT s.*
 FROM optimizacion.sabado s
 WHERE NOT EXISTS ( 	SELECT '1'
 					FROM optimizacion.viernes v
 					WHERE s.id = v.id);
+					
+Successfully run. Total query runtime: 5 secs 189 msec. 5918355 rows affected.
 */
 
+--
+/*
+SELECT s.*
+FROM optimizacion.sabado s
+WHERE s.id NOT IN(	SELECT DISTINCT v.id
+					FROM optimizacion.viernes v
+					WHERE s.id = v.id);
+					
+*/
 
+/*
+SELECT s.*
+FROM optimizacion.sabado s
+WHERE s.id NOT IN (	SELECT v.id
+					FROM optimizacion.viernes v);
+*/
+-- Los dos queries anteriores en el EXPLAIN arrojan una sección llamada "SUBPLAN 1" en rojo
+/*
+SELECT s.*
+FROM optimizacion.sabado s
+LEFT JOIN optimizacion.viernes v
+ON s.id = v.id
+WHERE v.id IS NULL;
+*/
 
-
+-- Successfully run. Total query runtime: 5 secs 176 msec. 5918355 rows affected.
 
 
