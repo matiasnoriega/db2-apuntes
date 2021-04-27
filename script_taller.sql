@@ -1,3 +1,5 @@
+--***Creacion de Tablas y Carga de Datos:***
+
 /*DROP TABLE IF EXISTS viernes;
 CREATE TABLE viernes(
 		fecha_hora	timestamp without time zone NOT NULL,
@@ -5,17 +7,14 @@ CREATE TABLE viernes(
 		tipo		varchar						NOT NULL,
 		"X"			smallint					NOT NULL,
 		"Y"			smallint					NOT NULL);
-
 COPY viernes
 FROM '/home/matias/viernes.csv'
 DELIMITER AS ','
 CSV HEADER;
-
 COPY viernes
 FROM '/home/matias/viernes2.csv'
 DELIMITER AS ','
 CSV HEADER;
-
 DROP TABLE IF EXISTS sabado;
 CREATE TABLE sabado(
 		fecha_hora	timestamp without time zone NOT NULL,
@@ -23,13 +22,10 @@ CREATE TABLE sabado(
 		tipo		varchar						NOT NULL,
 		"X"			smallint					NOT NULL,
 		"Y"			smallint					NOT NULL);
-
-
 COPY sabado
 FROM '/home/matias/sabado.csv'
 DELIMITER AS ','
 CSV HEADER;
-
 DROP TABLE IF EXISTS domingo;
 CREATE TABLE domingo(
 		fecha_hora	timestamp without time zone NOT NULL,
@@ -37,16 +33,14 @@ CREATE TABLE domingo(
 		tipo		varchar						NOT NULL,
 		"X"			smallint					NOT NULL,
 		"Y"			smallint					NOT NULL);
-
-
 COPY domingo
 FROM '/home/matias/domingo.csv'
 DELIMITER AS ','
 CSV HEADER;
 
+--***Creacion de Tabla "Los_tres_dias" por Ejercicio 3:***
 
 DROP TABLE IF EXISTS optimizacion.los_tres_dias;
-
 CREATE TABLE optimizacion.los_tres_dias as (
 	SELECT 	*
 	FROM	optimizacion.viernes
@@ -60,6 +54,8 @@ CREATE TABLE optimizacion.los_tres_dias as (
 	FROM	optimizacion.domingo
 );
 */
+
+--***Consultas básicas de Ejercicio 4 ***
 
 --a) ¿ Cuantas filas tiene la tabla del dia viernes?
 SELECT 	COUNT(*)
@@ -83,6 +79,8 @@ WHERE 	tipo like 'check-in'; -- 328838 || Successfully run. Total query runtime:
 SELECT COUNT(*)
 FROM 	optimizacion.los_tres_dias
 WHERE 	tipo like 'movement'; -- 25693123 || Successfully run. Total query runtime: 963 msec. 1 rows affected.
+
+--***Ejercicio número 6: ***
 
 -- 6. (Optimizaci´on de consultas con y sin ´ındices) A continuaci´on, resuelva la siguiente consulta con dos script distintos y analicaremos c´omo, en forma independiente al dise˜no f´ısico,
 -- podemoos reducir el tiempo de ejecuci´on desde varias horas a pocos segundos.
@@ -137,16 +135,33 @@ CONSULTA P: Successfully run. Total query runtime: 1 secs 920 msec. 11374 rows a
 - Con LIKE
 CONSULTA M: Successfully run. Total query runtime: 1 secs 930 msec. 11374 rows affected.
 CONSULTA P: Successfully run. Total query runtime: 2 secs 455 msec. 11374 rows affected.
-
 7. Idem al punto anterior, con la consulta:
 - Obtener cu´ales son las coordenadas de entrada al parque. (ayuda: use solamente la tabla
 de los d´ıas viernes).
 */
-SELECT "X", "Y"
-FROM optimizacion.viernes;
-select count(*) from optimizacion.viernes;
-SELECT EXTRACT(DAY FROM fecha_hora) as day FROM optimizacion.los_tres_dias group by day;
 
+-- ***Ejercicio número 7: ***
+
+SELECT 	v1."X", v1."Y"
+FROM 	optimizacion.viernes v1
+JOIN 	(select DISTINCT id, min(fecha_hora) as fecha
+		from optimizacion.viernes
+		where tipo = 'check-in' 
+		GROUP BY id) v2
+ON v1.id = v2.id AND v1.fecha_hora = v2.fecha
+GROUP BY v1."X", v1."Y";
+
+--0 Indices || Successfully run. Total query runtime: 761 msec. 3 rows affected.
+--1 Indice  || Successfully run. Total query runtime: 730 msec. 3 rows affected.
+--2 Indices || Successfully run. Total query runtime: 733 msec. 3 rows affected.
+--3 Indices || Successfully run. Total query runtime: 736 msec. 3 rows affected.
+
+/*X  | 	Y
+0  |	67
+63 |	99
+99 |	77
+*/
+-- Creación de INDCES para ejercicios
 DROP INDEX IF EXISTS optimizacion.index_tipo;
 DROP INDEX IF EXISTS optimizacion.index_id;
 DROP INDEX IF EXISTS optimizacion.index_viernes;
@@ -154,7 +169,7 @@ CREATE INDEX index_tipo ON optimizacion.los_tres_dias(tipo) WHERE tipo = 'check-
 CREATE INDEX index_viernes ON optimizacion.los_tres_dias(fecha_hora) WHERE EXTRACT(DAY FROM fecha_hora) = 6; --CREATE INDEX Query returned successfully in 14 secs 167 msec.
 CREATE INDEX index_id ON optimizacion.los_tres_dias(id); -- CREATE INDEX Query returned successfully in 10 secs 787 msec.
 
---8. (Análisis de consultas) Para cada una de las siguientes consultas, exprese en lenguaje coloquial qu´e es lo que hacen, y mida el tiempo de ejecuci´on de las mismas sin utilizar ´ındices: 
+--***Ejercicio 8 :(Análisis de consultas) Para cada una de las siguientes consultas, exprese en lenguaje coloquial qu´e es lo que hacen, y mida el tiempo de ejecuci´on de las mismas sin utilizar ´ındices: *** 
 
 -- Selecciona de la tabla SABADO todos los campos de las entradas cuyo visitante no haya visitado el parque el Viernes
 /*
@@ -174,10 +189,7 @@ FROM optimizacion.sabado s
 WHERE s.id NOT IN(	SELECT DISTINCT v.id
 					FROM optimizacion.viernes v
 					WHERE s.id = v.id);
-					
-*/
-
-/*
+				
 SELECT s.*
 FROM optimizacion.sabado s
 WHERE s.id NOT IN (	SELECT v.id
@@ -193,5 +205,3 @@ WHERE v.id IS NULL;
 */
 
 -- Successfully run. Total query runtime: 5 secs 176 msec. 5918355 rows affected.
-
-
